@@ -1,6 +1,7 @@
 package com.yada.ssp.mtnServer.net;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yada.ssp.mtnServer.config.ProxyProperties;
 import com.yada.ssp.mtnServer.util.DateUtil;
 import com.yada.ssp.mtnServer.util.SignUtil;
 import com.yada.ssp.mtnServer.view.*;
@@ -20,7 +21,7 @@ public class HttpClientTest {
 
     @Test
     public void postJson() {
-        HttpClient httpClient = new HttpClient();
+        HttpClient httpClient = new HttpClient(new ProxyProperties());
 
         Request req = new Request();
         MsgInfo msgInfo = new MsgInfo();
