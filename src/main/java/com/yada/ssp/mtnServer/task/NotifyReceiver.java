@@ -36,9 +36,13 @@ public class NotifyReceiver {
     @JmsListener(destination = "${mq.tranQueue}", containerFactory = "mqFactory")
     public void tranNotify(String msg) {
         logger.info("MQ获取的信息[{}]", msg);
-        Map<String, String> tran = strToMap(msg);
-        notifyErrService.setSending(tran.get("lsId"));
-        notifyService.send(tran.get("merNo"), tran.get("lsId"));
+        try {
+            Map<String, String> tran = strToMap(msg);
+            notifyErrService.setSending(tran.get("lsId"));
+            notifyService.send(tran.get("merNo"), tran.get("lsId"));
+        } catch (Exception e) {
+            logger.warn("MQ获取数据解析失败,数据是[{}],异常信息是[{}]", msg, e.getMessage());
+        }
     }
 
     /**
@@ -47,22 +51,19 @@ public class NotifyReceiver {
      * @param data MQ获取的数据
      * @return 字段映射
      */
-    private Map<String, String> strToMap(String data) {
+    private Map<String, String> strToMap(String data) throws Exception {
         // 商户号、交易时间(YYYYMMDDmmhhss)、支付方式、交易渠道、交易金额、交易币种、交易单号、检索参考号
         String[] fields = mqProperties.getDataField();
         Map<String, String> tran = new LinkedHashMap<>();
-        try {
-            Pattern pattern = Pattern.compile(mqProperties.getDataRegex());
-            Matcher matcher = pattern.matcher(data);
-            if (matcher.find()) {
-                for (int i = 0; i < fields.length; i++) {
-                    tran.put(fields[i], matcher.group(i + 1).trim());
-                }
-            } else {
-                logger.warn("MQ获取数据解析失败,数据是[{}]", data);
+        Pattern pattern = Pattern.compile(mqProperties.getDataRegex());
+        Matcher matcher = pattern.matcher(data);
+        if (matcher.find()) {
+            for (int i = 0; i < fields.length; i++) {
+                tran.put(fields[i], matcher.group(i + 1).trim());
             }
-        } catch (Exception e) {
-            logger.warn("MQ获取数据解析失败,数据是[{}],异常信息是[{}]", data, e.getMessage());
+        } else {
+            logger.warn("MQ获取数据解析失败,数据是[{}]", data);
+            throw new Exception("MQ获取数据解析失败");
         }
         return tran;
     }
