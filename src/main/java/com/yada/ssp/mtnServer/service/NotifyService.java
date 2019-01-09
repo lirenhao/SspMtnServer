@@ -117,7 +117,11 @@ public class NotifyService {
     private void sendSuccess(String merNo, String lsId, ApiOrg apiOrg, Response resp) {
         assert apiOrg != null;
         if (apiOrg.getPublicKey() != null) {
-            if (SignUtil.verify(resp.getData(), resp.getCertificateSignature().getSignature(), apiOrg.getPublicKey())) {
+            String sign = resp.getCertificateSignature().getSignature();
+            String data = resp.getData().replace(sign, "00000000");
+            if (SignUtil.verify(data, sign, apiOrg.getPublicKey())
+                    && resp.getMsgResponse() != null
+                    && "00".equals(resp.getMsgResponse().getRespCode())) {
                 notifyErrService.delete(lsId);
             } else {
                 logger.warn("商户[{}]交易通知返回[{}]验签失败", merNo);

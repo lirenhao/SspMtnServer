@@ -56,20 +56,22 @@ public class NotifyErrService {
      */
     public List<NotifyErr> getNotifyErr() {
         return notifyErrDao.findByRetryNoLessThanEqual(notifyRate.length)
-                .stream().filter(err -> {
-                    if (notifyRate.length < err.getRetryNo()) {
-                        return false;
-                    } else {
-                        try {
-                            long curTime = new Date().getTime();
-                            long expTime = sdf.parse(err.getDateTime()).getTime()
-                                    + notifyRate[err.getRetryNo() - 1] * 1000;
-                            return expTime > curTime;
-                        } catch (ParseException e) {
-                            return false;
-                        }
-                    }
-                }).collect(Collectors.toList());
+                .stream().filter(this::isNotify).collect(Collectors.toList());
+    }
+
+    boolean isNotify(NotifyErr err) {
+        if (notifyRate.length < err.getRetryNo()) {
+            return false;
+        } else {
+            try {
+                long curTime = System.currentTimeMillis();
+                long expTime = sdf.parse(err.getDateTime()).getTime()
+                        + notifyRate[err.getRetryNo() - 1] * 1000;
+                return curTime > expTime;
+            } catch (ParseException e) {
+                return false;
+            }
+        }
     }
 
     /**
